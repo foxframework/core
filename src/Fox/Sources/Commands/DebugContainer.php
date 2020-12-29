@@ -29,6 +29,7 @@ namespace Fox\Sources\Commands;
 use Fox\Attribute\Autowire;
 use Fox\Attribute\Command;
 use Fox\CLI\FoxCommand;
+use FoxContainerHelper;
 
 #[Command('fox', 'debugContainer')]
 #[Autowire]
@@ -38,6 +39,8 @@ class DebugContainer extends FoxCommand
     public function run(...$arguments): void
     {
         parent::run(...$arguments);
-        $this->writeOutput('Hello World');
+        $this->writeOutput("Available services:\n" . join(",\n", FoxContainerHelper::$serviceNames) . "\n");
+        $this->writeOutput("Available commands:\n" . join(", \n", array_keys(FoxContainerHelper::$commandNames)) . "\n");
+        $this->writeOutput("Available routes:\n" . join(", \n", array_keys(FoxContainerHelper::$controllerNames)) . "\n");
     }
 }
