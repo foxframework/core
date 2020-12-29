@@ -1,0 +1,26 @@
+{
+    "name": "foxframework/core",
+    "description": "The smart and thin PHP Framework",
+    "type": "library",
+    "require-dev": {
+        "phpunit/phpunit": "^9"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Petr Ploner",
+            "email": "petr@ploner.cz"
+        }
+    ],
+    "require": {
+        "tracy/tracy": "2.7.*",
+        "psr/log": "^1.1",
+        "psr/container": "^1.0",
+        "psr/http-message": "^1.0",
+        "spatie/async": "^1.5",
+        "nette/php-generator": "^3.5"
+    },
+    "autoload": {
+        "psr-4": {"Fox\\": "src/Fox/"}
+    }
+}
