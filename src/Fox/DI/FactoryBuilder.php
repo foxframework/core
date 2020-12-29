@@ -27,6 +27,8 @@ namespace Fox\DI;
 
 
 use Fox\Attribute\Autowire;
+use Fox\Attribute\Command;
+use Fox\Attribute\Controller;
 use Fox\Attribute\Service;
 use Fox\Config\ContainerConfiguration;
 use Fox\NotImplementedException;
@@ -63,6 +65,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ';
+
+    const SERVICE = 0;
+    const CONTROLLER = 1;
+    const COMMAND = 2;
 
     public static function getReflection(string $file): ?ReflectionClass
     {
@@ -157,6 +163,24 @@ SOFTWARE.
     public static function getParameterName(string $class): string
     {
         return lcfirst(str_replace('\\', '', $class));
+    }
+
+    public static function getTypeOfService(ReflectionClass $class): array
+    {
+        foreach ($class->getAttributes() as $attribute) {
+            $attributeInstance = $attribute->newInstance();
+            if ($attributeInstance instanceof Service) {
+                if ($attributeInstance instanceof Controller) {
+                    return [self::CONTROLLER, ''];
+                }
+                if ($attributeInstance instanceof Command) {
+                    return [self::COMMAND, sprintf('%s:%s', $attributeInstance->namespace, $attributeInstance->name)];
+                }
+                return [self::SERVICE, null];
+            }
+        }
+
+        throw new ContainerGeneratorException("Class $class->name has not defined Service attribute!");
     }
 
     private static function autowireService(ReflectionClass $class, array $mappedInterfaces, Method $method): array

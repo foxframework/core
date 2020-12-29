@@ -26,9 +26,13 @@
 namespace Fox;
 
 
+use Fox\CLI\CLIException;
+use Fox\CLI\CommandRunner;
 use Fox\Config\AppConfiguration;
 use Fox\Config\ContainerConfiguration;
 use Fox\DI\ContainerService;
+use Fox\Helpers\Server;
+use Psr\Container\ContainerInterface;
 use Tracy\Debugger;
 
 class Core
@@ -36,6 +40,7 @@ class Core
     private AppConfiguration $appConfiguration;
     private ContainerConfiguration $containerConfiguration;
     private ContainerService $containerService;
+    private ContainerInterface $container;
 
     public function __construct(AppConfiguration $appConfiguration,
                                 ContainerConfiguration $containerConfiguration,
@@ -65,12 +70,18 @@ class Core
 
     private function boot()
     {
-        $container = $this->containerService->initContainer();
+        $this->container = $this->containerService->initContainer();
     }
 
     private function handleCLI()
     {
+        $arguments = Server::get('argv');
+        if (count($arguments) < 2) {
+            throw new CLIException('Not enough parameters, missing command name!');
+        }
 
+        $commandRunner = new CommandRunner($this->container);
+        $commandRunner->runCommand($arguments[1]);
     }
 
     private function handleHTTP()
