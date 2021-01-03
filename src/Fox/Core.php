@@ -32,6 +32,7 @@ use Fox\Config\AppConfiguration;
 use Fox\Config\ContainerConfiguration;
 use Fox\DI\ContainerService;
 use Fox\Helpers\Server;
+use Fox\Http\ControllerRunner;
 use Psr\Container\ContainerInterface;
 use Tracy\Debugger;
 
@@ -68,24 +69,24 @@ class Core
         }
     }
 
-    private function boot()
+    private function boot(): void
     {
         $this->container = $this->containerService->initContainer();
     }
 
-    private function handleCLI()
+    private function handleCLI(): void
     {
-        $arguments = Server::get('argv');
-        if (count($arguments) < 2) {
+        if (Server::get('argc') < 2) {
             throw new CLIException('Not enough parameters, missing command name!');
         }
 
         $commandRunner = new CommandRunner($this->container);
-        $commandRunner->runCommand($arguments[1]);
+        $commandRunner->runCommand(Server::get('argv')[1]);
     }
 
-    private function handleHTTP()
+    private function handleHTTP(): void
     {
-
+        $controllerRunner = new ControllerRunner($this->container);
+        $controllerRunner->handle(Server::get('REQUEST_URI'));
     }
 }

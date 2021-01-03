@@ -26,22 +26,27 @@
 namespace Fox\DI;
 
 
+use Fox\Config\AppConfiguration;
 use Fox\Config\ContainerConfiguration;
 use FoxContainerHelper;
 use Psr\Container\ContainerInterface;
 
 class FoxContainer implements ContainerInterface
 {
+    private const INTERNALLY_INITIALIZED_SERVICES = [AppConfiguration::class, ContainerInterface::class];
     private array $initializedServices = [];
 
     public function __construct(private FoxContainerHelper $containerHelper,
-                                private ContainerConfiguration $containerConfiguration)
+                                private ContainerConfiguration $containerConfiguration,
+                                private AppConfiguration $appConfiguration)
     {
+        $this->initializedServices[AppConfiguration::class] = $this->appConfiguration;
+        $this->initializedServices[ContainerInterface::class] = $this;
     }
 
     public function get($id): object
     {
-        if ($this->containerConfiguration->isSingleton()) {
+        if ($this->containerConfiguration->isSingleton() || in_array($id, self::INTERNALLY_INITIALIZED_SERVICES)) {
             if (array_key_exists($id, $this->initializedServices)) {
                 return $this->initializedServices[$id];
             }

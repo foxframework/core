@@ -29,6 +29,7 @@ namespace Fox\DI;
 use Fox\Attribute\Autowire;
 use Fox\Attribute\Command;
 use Fox\Attribute\Controller;
+use Fox\Attribute\Route;
 use Fox\Attribute\Service;
 use Fox\Config\ContainerConfiguration;
 use Fox\NotImplementedException;
@@ -171,7 +172,17 @@ SOFTWARE.
             $attributeInstance = $attribute->newInstance();
             if ($attributeInstance instanceof Service) {
                 if ($attributeInstance instanceof Controller) {
-                    return [self::CONTROLLER, ''];
+                    $route = null;
+                    foreach ($class->getAttributes() as $attr) {
+                        $attrInstance = $attr->newInstance();
+                        if ($attrInstance instanceof Route) {
+                            $route = $attrInstance->route;
+                        }
+                    }
+                    if ($route === null) {
+                        throw new ContainerGeneratorException("Missing Route settings for %s", $class->getName());
+                    }
+                    return [self::CONTROLLER, $route];
                 }
                 if ($attributeInstance instanceof Command) {
                     return [self::COMMAND, sprintf('%s:%s', $attributeInstance->namespace, $attributeInstance->name)];

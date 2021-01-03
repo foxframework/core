@@ -59,7 +59,7 @@ class ContainerService
         require_once $this->getContainerHelperPath();
         $containerHelper = new FoxContainerHelper($this->appConfiguration);
 
-        return new FoxContainer($containerHelper, $this->containerConfiguration);
+        return new FoxContainer($containerHelper, $this->containerConfiguration, $this->appConfiguration);
     }
 
     private function containerHelperExists(): bool
@@ -171,6 +171,8 @@ class ContainerService
             }
         }
 
+        $servicesNames[] = ContainerInterface::class;
+        $servicesNames[] = AppConfiguration::class;
         return [$servicesNames, $controllersNames, $commandsNames];
     }
 
