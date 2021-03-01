@@ -50,7 +50,23 @@ class ControllerRunner
                 if ($bodyArg !== null) {
                     $args[$bodyArg] = $this->resolveBody($controller, $method, $bodyArg);
                 }
-                call_user_func_array([$controller, $method], $args);
+                $result = call_user_func_array([$controller, $method], $args);
+
+                header('Content-Type: text/plain');
+                if ($result instanceof Response) {
+                    http_response_code($result->getStatus());
+
+                    if (is_object($result->getBody()) || is_array($result->getBody())) {
+                        header('Content-Type: application/json');
+                        echo json_encode((array)$result->getBody());
+                        exit;
+                    }
+                    echo $result->getBody();
+                    exit;
+                }
+
+                echo $result;
+                exit;
             } catch (TypeError $t) {
                 if ($t instanceof ArgumentCountError) {
                     throw $t;
