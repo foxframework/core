@@ -26,6 +26,7 @@
 namespace Fox\Helpers;
 
 
+use Fox\Attribute\TypedArray;
 use Fox\Http\UnknownBodyArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
@@ -76,23 +77,63 @@ class RequestBody
         foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $reflectionMethod) {
             if (str_starts_with($reflectionMethod->getName(), 'set')) {
                 $lowerVar = strtolower(str_replace('set', '', $reflectionMethod->getName()));
-                $setters[$lowerVar] = $reflectionMethod->getName();
+                $type = $reflectionMethod->getParameters()[0]?->getType()?->getName() ?? null;
+                $typedArray = $type === 'array' ? $reflectionMethod->getAttributes(TypedArray::class)[0]?->newInstance() : null;
+                $setters[$lowerVar] = [$type, $reflectionMethod->getName(), $typedArray];
             }
         }
 
+        $settersKeys = array_keys($setters);
+
         foreach ($optionalArgs as $optionalArg) {
             $lowerizedKey = strtolower($optionalArg);
-            if (!in_array($lowerizedKey, array_keys($setters))) {
+            if (!in_array($lowerizedKey, $settersKeys)) {
                 throw new UnknownBodyArgumentException($optionalArg);
             }
-            
-            call_user_func([$DAOInstance, $setters[$lowerizedKey]], $requestBody[$optionalArg]);
+
+            list($type, $name, $typedArray) = $setters[$lowerizedKey];
+
+            /** @var $typedArray TypedArray|null */
+            if ($typedArray !== null) {
+                $value = [];
+                foreach ($requestBody[$optionalArg] as $item) {
+                    $value[] = self::instanceDAOFromBody($typedArray->className, $item);
+                }
+            } else {
+                $value = str_contains($type, 'DAO') ? self::instanceDAOFromBody($type, $requestBody[$optionalArg]) : $requestBody[$optionalArg];
+            }
+            call_user_func([$DAOInstance, $name], $value);
         }
     }
 
     private static function createDAOInstance(ReflectionClass $reflectionClass, array $requiredProperties, ?array $requestBody): object
     {
-        foreach ($requiredProperties as $key => $value) {
+        foreach ($requiredProperties as $key => list($type, $value)) {
+            if (str_contains($type, 'DAO') && isset($requestBody[$key]) && !empty($requestBody[$key])) {
+                $requiredProperties[$key] = self::instanceDAOFromBody($type, $requestBody[$key]);
+                continue;
+            }
+
+            $typedArrays = $reflectionClass->getConstructor()?->getAttributes(TypedArray::class);
+            if ($type === 'array' && $typedArrays !== null) {
+                $arrayType = null;
+                foreach ($typedArrays as $typedArray) {
+                    /** @var TypedArray $attrInst */
+                    $attrInst = $typedArray->newInstance();
+                    if ($attrInst->variable === $key) {
+                        $arrayType = $attrInst->className;
+                        break;
+                    }
+                }
+
+                $newArray = [];
+                foreach ($requestBody[$key] as $item) {
+                    $newArray[] = self::instanceDAOFromBody($arrayType, $item);
+                }
+
+                $requiredProperties[$key] = $newArray;
+                continue;
+            }
             $requiredProperties[$key] = $requestBody[$key] ?? null;
         }
 
@@ -113,7 +154,7 @@ class RequestBody
             } catch (\ReflectionException) {
                 $default = null;
             }
-            $parameters[$constructParameter->getName()] = $default;
+            $parameters[$constructParameter->getName()] = [$constructParameter->getType()->getName(), $default];
         }
 
         return $parameters;
