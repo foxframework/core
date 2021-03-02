@@ -106,17 +106,20 @@ class ContainerService
 
         $foxServices = FactoryBuilder::getServices(__DIR__ . '/../Sources');
         $services = FactoryBuilder::getServices($this->appConfiguration->getSrcDir());
+        foreach ($this->appConfiguration->getExtensions() as $extension) {
+            $services = array_merge($services, FactoryBuilder::getServices($extension));
+        }
 
         $foxInterfaces = [];
         /** @var ReflectionClass $service */
         foreach ($foxServices as $service) {
-            $foxInterfaces = FactoryBuilder::addInterfaces($service, $foxInterfaces);
+            $foxInterfaces = array_merge($foxInterfaces, FactoryBuilder::addInterfaces($service, $foxInterfaces));
         }
 
         $mappedInterfaces = [];
         /** @var ReflectionClass $service */
         foreach ($services as $service) {
-            $mappedInterfaces = FactoryBuilder::addInterfaces($service, $mappedInterfaces);
+            $mappedInterfaces = array_merge($mappedInterfaces, FactoryBuilder::addInterfaces($service, $mappedInterfaces));
         }
 
         list($foxServicesNames, $foxControllersNames, $foxCommandsNames) = $this->addServicesFactories($foxServices, $foxInterfaces, $class);

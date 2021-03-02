@@ -34,6 +34,7 @@ abstract class AppConfiguration
     private string $controllersDir;
     private string $templatesDir;
     private bool $debug = false;
+    private array $extensions = [];
 
     public function __construct(private string $baseDir, private array $parameters)
     {
@@ -113,5 +114,15 @@ abstract class AppConfiguration
     public function getParameter(string $name): string|array|null
     {
         return $this->parameters[$name] ?? null;
+    }
+
+    public function getExtensions(): array
+    {
+        return $this->extensions;
+    }
+
+    public function setExtensions(array $extensions): void
+    {
+        $this->extensions = $extensions;
     }
 }
