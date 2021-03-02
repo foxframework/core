@@ -35,6 +35,7 @@ abstract class AppConfiguration
     private string $templatesDir;
     private bool $debug = false;
     private array $extensions = [];
+    private array $globalBeforeActions = [];
 
     public function __construct(private string $baseDir, private array $parameters)
     {
@@ -124,5 +125,15 @@ abstract class AppConfiguration
     public function setExtensions(array $extensions): void
     {
         $this->extensions = $extensions;
+    }
+
+    public function getGlobalBeforeActions(): array
+    {
+        return $this->globalBeforeActions;
+    }
+
+    public function setGlobalBeforeActions(array $globalBeforeActions): void
+    {
+        $this->globalBeforeActions = $globalBeforeActions;
     }
 }

@@ -27,6 +27,7 @@ namespace Fox\Core\Http;
 
 
 use ArgumentCountError;
+use Fox\Core\Config\AppConfiguration;
 use Fox\Core\Helpers\RequestBody;
 use Fox\Core\Helpers\Server;
 use FoxContainerHelper;
@@ -37,8 +38,11 @@ use TypeError;
 
 class ControllerRunner
 {
+    private AppConfiguration $config;
+
     public function __construct(private ContainerInterface $container)
     {
+        $this->config = $this->container->get(AppConfiguration::class);
     }
 
     public function handle(string $path): void
@@ -50,6 +54,13 @@ class ControllerRunner
                 if ($bodyArg !== null) {
                     $args[$bodyArg] = $this->resolveBody($controller, $method, $bodyArg);
                 }
+
+                foreach ($this->config->getGlobalBeforeActions() as $beforeActionClass) {
+                    /** @var BeforeAction $beforeAction */
+                    $beforeAction = $this->container->get($beforeActionClass);
+                    $beforeAction->handleBeforeAction($controller, $method, $args[$bodyArg] ?? null);
+                }
+
                 $result = call_user_func_array([$controller, $method], $args);
 
                 header('Content-Type: text/plain');
