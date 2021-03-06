@@ -86,6 +86,7 @@ class ControllerRunner
                 preg_match('~must be of type (.*),~', $t->getMessage(), $expected);
                 preg_match('~, (.*) given~', $t->getMessage(), $given);
                 $typeVar = trim($var[0], '$');
+                dump($t);
                 throw new BadRequestException("The request parameter '$typeVar' expected to be '$expected[1]', '$given[1]' given.");
             }
         } catch (HttpException $e) {

@@ -26,6 +26,7 @@
 namespace Fox\Core\DI;
 
 
+use App\Services\Security\TestingIdentityProvider;
 use Fox\Core\Attribute\Autowire;
 use Fox\Core\Attribute\Command;
 use Fox\Core\Attribute\Controller;

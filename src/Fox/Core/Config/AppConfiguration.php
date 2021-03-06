@@ -26,6 +26,8 @@
 namespace Fox\Core\Config;
 
 
+use Fox\Core\FoxExtension;
+
 abstract class AppConfiguration
 {
     private string $srcDir = 'src';
@@ -122,17 +124,23 @@ abstract class AppConfiguration
         return $this->extensions;
     }
 
-    public function setExtensions(array $extensions): void
-    {
-        $this->extensions = $extensions;
-    }
-
     public function getGlobalBeforeActions(): array
     {
         return $this->globalBeforeActions;
     }
 
-    public function setGlobalBeforeActions(array $globalBeforeActions): void
+    public function addGlobalBeforeAction(string $beforeActionClass): void
+    {
+        $this->globalBeforeActions[] = $beforeActionClass;
+    }
+
+    public function registerExtension(FoxExtension $foxExtension): void
+    {
+        $this->extensions[] = $foxExtension::getExtensionServices();
+        $this->setGlobalBeforeActions(array_merge($this->getGlobalBeforeActions(), $foxExtension::getGlobalBeforeActions()));
+    }
+
+    private function setGlobalBeforeActions(array $globalBeforeActions): void
     {
         $this->globalBeforeActions = $globalBeforeActions;
     }
