@@ -31,9 +31,11 @@ use Fox\Core\CLI\CommandRunner;
 use Fox\Core\Config\AppConfiguration;
 use Fox\Core\Config\ContainerConfiguration;
 use Fox\Core\DI\ContainerService;
+use Fox\Core\Helpers\Globals;
 use Fox\Core\Helpers\Server;
 use Fox\Core\Http\ControllerRunner;
 use Psr\Container\ContainerInterface;
+use Symfony\Component\Finder\Glob;
 use Tracy\Debugger;
 
 class Core
@@ -72,6 +74,7 @@ class Core
     private function boot(): void
     {
         $this->container = $this->containerService->initContainer();
+        Globals::set('foxContainer', $this->container);
     }
 
     private function handleCLI(): void
