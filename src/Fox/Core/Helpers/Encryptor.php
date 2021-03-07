@@ -2,7 +2,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020 Petr Ploner <petr@ploner.cz>
+ * Copyright (c) 2021 Petr Ploner <petr@ploner.cz>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,27 +20,36 @@
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ *  SOFTWARE.
+ *
  */
 
 namespace Fox\Core\Helpers;
 
 
-class Server
+class Encryptor
 {
-    public static function get(string $key): mixed
+
+    private const METHOD = 'AES-256-CBC';
+
+    public static function encrypt(string $key, string $content): string
     {
-        return $_SERVER[$key] ?? null;
+        $length = openssl_cipher_iv_length(self::METHOD);
+        $iv = openssl_random_pseudo_bytes($length);
+        $encrypted = openssl_encrypt($content, self::METHOD, $key, OPENSSL_RAW_DATA, $iv);
+        return base64_encode($encrypted) . '|' . base64_encode($iv);
     }
 
-    public static function getIp(): ?string
+    public static function decrypt(string $key, string $content): string
     {
-        return self::get('HTTP_CLIENT_IP')
-            ?? self::get("HTTP_CF_CONNECTING_IP")
-            ?? self::get('HTTP_X_FORWARDED')
-            ?? self::get('HTTP_X_FORWARDED_FOR')
-            ?? self::get('HTTP_FORWARDED')
-            ?? self::get('HTTP_FORWARDED_FOR')
-            ?? self::get('REMOTE_ADDR');
+        list($data, $iv) = explode('|', $content);
+        $iv = base64_decode($iv);
+        $decrypted = openssl_decrypt($data, self::METHOD, $key, 0, $iv);
+        if ($decrypted) {
+            return $decrypted;
+        }
+
+        throw new CanNotDecryptException();
     }
+
 }

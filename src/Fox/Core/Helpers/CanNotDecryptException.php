@@ -2,7 +2,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020 Petr Ploner <petr@ploner.cz>
+ * Copyright (c) 2021 Petr Ploner <petr@ploner.cz>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,27 +20,16 @@
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ *  SOFTWARE.
+ *
  */
 
 namespace Fox\Core\Helpers;
 
 
-class Server
-{
-    public static function get(string $key): mixed
-    {
-        return $_SERVER[$key] ?? null;
-    }
+use Exception;
 
-    public static function getIp(): ?string
-    {
-        return self::get('HTTP_CLIENT_IP')
-            ?? self::get("HTTP_CF_CONNECTING_IP")
-            ?? self::get('HTTP_X_FORWARDED')
-            ?? self::get('HTTP_X_FORWARDED_FOR')
-            ?? self::get('HTTP_FORWARDED')
-            ?? self::get('HTTP_FORWARDED_FOR')
-            ?? self::get('REMOTE_ADDR');
-    }
+class CanNotDecryptException extends Exception
+{
+
 }
