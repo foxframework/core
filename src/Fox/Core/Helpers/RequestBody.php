@@ -77,8 +77,17 @@ class RequestBody
         foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $reflectionMethod) {
             if (str_starts_with($reflectionMethod->getName(), 'set')) {
                 $lowerVar = strtolower(str_replace('set', '', $reflectionMethod->getName()));
-                $type = $reflectionMethod->getParameters()[0]?->getType()?->getName() ?? null;
-                $typedArray = $type === 'array' ? $reflectionMethod->getAttributes(TypedArray::class)[0]?->newInstance() : null;
+
+                $type = null;
+                if (!empty($reflectionMethod->getParameters())) {
+                    $type = $reflectionMethod->getParameters()[0]?->getType()?->getName() ?? null;
+                }
+
+                $typedArray = null;
+                if ($type === 'array' && !empty($reflectionMethod->getAttributes(TypedArray::class))) {
+                    $typedArray = $reflectionMethod->getAttributes(TypedArray::class)[0]?->newInstance();
+                }
+
                 $setters[$lowerVar] = [$type, $reflectionMethod->getName(), $typedArray];
             }
         }
@@ -87,11 +96,24 @@ class RequestBody
 
         foreach ($optionalArgs as $optionalArg) {
             $lowerizedKey = strtolower($optionalArg);
+            $useSetter = true;
+            $reflectionProperty = $reflectionClass->getProperty($optionalArg);
             if (!in_array($lowerizedKey, $settersKeys)) {
-                throw new UnknownBodyArgumentException($optionalArg);
+                $useSetter = false;
+                if (!$reflectionProperty->isPublic()) {
+                    throw new UnknownBodyArgumentException($optionalArg);
+                }
             }
 
-            list($type, $name, $typedArray) = $setters[$lowerizedKey];
+            if ($useSetter) {
+                list($type, $name, $typedArray) = $setters[$lowerizedKey];
+            } else {
+                $type = $reflectionProperty->getType()->getName();
+                $typedArray = null;
+                if ($type === 'array' && !empty($reflectionProperty->getAttributes(TypedArray::class))) {
+                    $typedArray = $reflectionProperty->getAttributes(TypedArray::class)[0]?->newInstance();
+                }
+            }
 
             /** @var $typedArray TypedArray|null */
             if ($typedArray !== null) {
@@ -100,9 +122,14 @@ class RequestBody
                     $value[] = self::instanceDAOFromBody($typedArray->className, $item);
                 }
             } else {
-                $value = str_contains($type, 'DAO') ? self::instanceDAOFromBody($type, $requestBody[$optionalArg]) : $requestBody[$optionalArg];
+                $value = (str_contains($type, 'DAO') || str_contains($type, 'Entity')) ? self::instanceDAOFromBody($type, $requestBody[$optionalArg]) : $requestBody[$optionalArg];
             }
-            call_user_func([$DAOInstance, $name], $value);
+
+            if ($useSetter) {
+                call_user_func([$DAOInstance, $name], $value);
+            } else {
+                $DAOInstance->{$optionalArg} = $value;
+            }
         }
     }
 
