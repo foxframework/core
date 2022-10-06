@@ -95,6 +95,7 @@ class ControllerRunner
 
     private function resolveController(string $path): array
     {
+        $path = explode('?', $path)[0];
         $availableRoutes = $this->getPossibleRoutes($path);
         foreach ($availableRoutes as $availableRoute) {
             list($checkRouteArguments, $args) = $this->checkRouteArguments($availableRoute, $path);
@@ -137,7 +138,7 @@ class ControllerRunner
 
         foreach ($explodedRoute as $index => $routePart) {
             if (str_starts_with($routePart, '{')) {
-                $args[trim($routePart, '{}')] = $explodedPath[$index];
+                $args[trim($routePart, '{}')] = urldecode($explodedPath[$index]);
                 continue;
             }
 
