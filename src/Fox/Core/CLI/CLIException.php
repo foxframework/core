@@ -26,7 +26,9 @@
 namespace Fox\Core\CLI;
 
 
-class CLIException extends \Fox\Core\FoxException
+use Fox\Core\FoxException;
+
+class CLIException extends FoxException
 {
 
 }

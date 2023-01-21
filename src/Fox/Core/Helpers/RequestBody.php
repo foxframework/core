@@ -29,6 +29,7 @@ namespace Fox\Core\Helpers;
 use Fox\Core\Attribute\TypedArray;
 use Fox\Core\Http\UnknownBodyArgumentException;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionMethod;
 
 class RequestBody
@@ -122,7 +123,7 @@ class RequestBody
                     $value[] = self::instanceDAOFromBody($typedArray->className, $item);
                 }
             } else {
-                $value = (str_contains($type, 'DAO') || str_contains($type, 'Entity')) ? self::instanceDAOFromBody($type, $requestBody[$optionalArg]) : $requestBody[$optionalArg];
+                $value = (str_contains($type, 'DAO')) ? self::instanceDAOFromBody($type, $requestBody[$optionalArg]) : $requestBody[$optionalArg];
             }
 
             if ($useSetter) {
@@ -178,7 +179,7 @@ class RequestBody
         foreach ($constructParameters as $constructParameter) {
             try {
                 $default = $constructParameter->getDefaultValue();
-            } catch (\ReflectionException) {
+            } catch (ReflectionException) {
                 $default = null;
             }
             $parameters[$constructParameter->getName()] = [$constructParameter->getType()->getName(), $default];
