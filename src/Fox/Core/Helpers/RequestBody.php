@@ -60,6 +60,16 @@ class RequestBody
 
     public static function instanceDAOFromBody(string $DAOClass, ?array $requestBody): ?object
     {
+        $allEmpty = true;
+        foreach ($requestBody as $value) {
+            if (!empty($value)) {
+                $allEmpty = false;
+                break;
+            }
+        }
+        if ($allEmpty) {
+            return null;
+        }
         $reflection = new ReflectionClass($DAOClass);
         $requiredProperties = self::getRequiredProperties($reflection);
         $DAOInstance = self::createDAOInstance($reflection, $requiredProperties, $requestBody);
